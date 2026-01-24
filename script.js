@@ -5,7 +5,8 @@ const SUPABASE_URL = "https://juinlrgyqbpssyjcuola.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1aW5scmd5cWJwc3N5amN1b2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTYxNDcsImV4cCI6MjA4NDYzMjE0N30.6Q28mR-MAsD0mJIEXT2uFVGzBX6hECJZDN3Nq_70i2I";
 
 // ====== CREATE CLIENT ======
-const supabase = window.supabase.createClient(
+// Renamed to 'supabaseClient' to avoid conflict with the global 'supabase' library variable
+const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
@@ -31,7 +32,8 @@ if (!form) {
 
         console.log("Attempting login for:", email);
 
-        const { data, error } = await supabase.auth.signInWithPassword({
+        // Use supabaseClient here
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email,
             password
         });
