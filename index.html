@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grofast Team Login</title>
+    <meta name="description" content="Secure internal team login portal for Grofast.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <main class="login-card">
+            <img src="logo.jpg" alt="Grofast Logo" class="logo">
+
+            <h1>Team Login</h1>
+            <p class="subtitle">Access is granted by admin invitation only</p>
+
+            <form id="loginForm" action="#" method="POST">
+                <div class="form-group">
+                    <label for="email" class="sr-only">Company Email</label>
+                    <input type="email" id="email" name="email" placeholder="Company Email" required
+                        autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="sr-only">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Password" required
+                        autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+
+            <div class="links">
+                <a href="#" class="forgot-password">Forgot password?</a>
+                <p class="helper-text">Don’t have access? Contact your admin.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
