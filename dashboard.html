@@ -11,25 +11,34 @@
     <h2>Welcome to Team Dashboard</h2>
     <button id="logoutBtn">Logout</button>
 
+    <!-- Load Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
+        console.log("Dashboard script running");
+
+        // CONFIG
         const SUPABASE_URL = "https://juinlrgyqbpssyjcuola.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1aW5scmd5cWJwc3N5amN1b2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTYxNDcsImV4cCI6MjA4NDYzMjE0N30.6Q28mR-MAsD0mJIEXT2uFVGzBX6hECJZDN3Nq_70i2I";
 
+        // CREATE CLIENT (ONLY ONCE)
         const supabase = window.supabase.createClient(
             SUPABASE_URL,
             SUPABASE_KEY
         );
 
-        // Protect dashboard
+        // PROTECT PAGE
         (async () => {
             const { data } = await supabase.auth.getUser();
+
             if (!data.user) {
                 window.location.href = "index.html";
+            } else {
+                console.log("User logged in:", data.user.email);
             }
         })();
 
-        // Logout
+        // LOGOUT
         document.getElementById("logoutBtn").addEventListener("click", async () => {
             await supabase.auth.signOut();
             window.location.href = "index.html";
