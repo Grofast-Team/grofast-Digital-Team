@@ -21,15 +21,15 @@
         const SUPABASE_URL = "https://juinlrgyqbpssyjcuola.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1aW5scmd5cWJwc3N5amN1b2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTYxNDcsImV4cCI6MjA4NDYzMjE0N30.6Q28mR-MAsD0mJIEXT2uFVGzBX6hECJZDN3Nq_70i2I";
 
-        // CREATE CLIENT (ONLY ONCE)
-        const supabase = window.supabase.createClient(
+        // CREATE CLIENT - renamed to avoid conflict with the global 'supabase' library object
+        const supabaseClient = window.supabase.createClient(
             SUPABASE_URL,
             SUPABASE_KEY
         );
 
         // PROTECT PAGE
         (async () => {
-            const { data } = await supabase.auth.getUser();
+            const { data } = await supabaseClient.auth.getUser();
 
             if (!data.user) {
                 window.location.href = "index.html";
@@ -40,7 +40,7 @@
 
         // LOGOUT
         document.getElementById("logoutBtn").addEventListener("click", async () => {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             window.location.href = "index.html";
         });
     </script>
