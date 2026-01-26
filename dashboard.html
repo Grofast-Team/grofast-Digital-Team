@@ -3,7 +3,16 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const session = localStorage.getItem("session");
+
+        if (!session) {
+            window.location.href = "index.html";
+        }
+    </script>
 </head>
 
 <body>
@@ -11,38 +20,73 @@
     <h2>Welcome to Team Dashboard</h2>
     <button id="logoutBtn">Logout</button>
 
-    <!-- Load Supabase ONCE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <div id="adminPanel">
+        <h2>Create Team Member</h2>
+        <input id="newEmail" placeholder="Email">
+        <input id="newPassword" placeholder="Temp Password">
+        <input id="newDept" placeholder="Department">
+        <button onclick="createUser()">Create User</button>
+    </div>
 
     <script>
-        console.log("Dashboard script running");
-
-        // CONFIG
         const SUPABASE_URL = "https://juinlrgyqbpssyjcuola.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1aW5scmd5cWJwc3N5amN1b2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTYxNDcsImV4cCI6MjA4NDYzMjE0N30.6Q28mR-MAsD0mJIEXT2uFVGzBX6hECJZDN3Nq_70i2I";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1aW5scmd5cWJwc3N5amN1b2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTYxNDcsImV4cCI6MjA4NDYzMjE0N30.6Q28mR-MAsD0mJIEXT2uFVGzBX6hECJZDN3Nq_70i2I";
 
-        // CREATE CLIENT - renamed to avoid conflict with the global 'supabase' library object
-        const supabaseClient = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        );
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // PROTECT PAGE
-        (async () => {
-            const { data } = await supabaseClient.auth.getUser();
+        async function loadProfile() {
+            const sessionData = JSON.parse(localStorage.getItem("session"));
 
-            if (!data.user) {
-                window.location.href = "index.html";
-            } else {
-                console.log("User logged in:", data.user.email);
+            const { data, error } = await supabase
+                .from("user_profiles")
+                .select("*")
+                .eq("id", sessionData.user.id)
+                .single();
+
+            if (error) {
+                console.error("Error loading profile:", error);
+                return;
             }
-        })();
+
+            if (data.role !== "admin") {
+                document.getElementById("adminPanel").style.display = "none";
+            }
+        }
+
+        async function createUser() {
+            const email = document.getElementById("newEmail").value;
+            const password = document.getElementById("newPassword").value;
+            const department = document.getElementById("newDept").value;
+
+            const res = await fetch(
+                "https://juinlrgyqbpssyjcuola.functions.supabase.co/admin-create-user",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "authorization": "Bearer grofast_super_admin_key"
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        role: "team",
+                        department
+                    })
+                }
+            );
+
+            const data = await res.json();
+            alert("User Created!");
+        }
 
         // LOGOUT
         document.getElementById("logoutBtn").addEventListener("click", async () => {
-            await supabaseClient.auth.signOut();
+            await supabase.auth.signOut();
+            localStorage.removeItem("session");
             window.location.href = "index.html";
         });
+
+        loadProfile();
     </script>
 
 </body>
