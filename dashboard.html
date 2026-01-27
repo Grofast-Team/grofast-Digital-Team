@@ -218,7 +218,7 @@
         // AUTHENTICATION CHECK
         // ========================================
         async function checkAuth() {
-            const sessionStr = localStorage.getItem("session");
+            const sessionStr = localStorage.getItem("sb-session");
 
             if (!sessionStr) {
                 window.location.href = "index.html";
@@ -227,18 +227,34 @@
 
             try {
                 const session = JSON.parse(sessionStr);
-                const { data, error } = await client.auth.getUser(session.access_token);
+
+                // CRITICAL: Restore session so JWT is used in all requests
+                const { error: sessionError } = await client.auth.setSession({
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token
+                });
+
+                if (sessionError) {
+                    console.error("Session restore error:", sessionError);
+                    localStorage.removeItem("sb-session");
+                    window.location.href = "index.html";
+                    return false;
+                }
+
+                // Get current user after session is set
+                const { data, error } = await client.auth.getUser();
 
                 if (error || !data?.user) {
-                    localStorage.removeItem("session");
+                    localStorage.removeItem("sb-session");
                     window.location.href = "index.html";
                     return false;
                 }
 
                 currentUser = data.user;
                 return true;
-            } catch {
-                localStorage.removeItem("session");
+            } catch (err) {
+                console.error("Auth check error:", err);
+                localStorage.removeItem("sb-session");
                 window.location.href = "index.html";
                 return false;
             }
@@ -469,7 +485,7 @@
             try {
                 await client.auth.signOut();
             } catch { }
-            localStorage.removeItem("session");
+            localStorage.removeItem("sb-session");
             window.location.href = "index.html";
         }
 

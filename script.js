@@ -89,7 +89,7 @@ async function handleLogin(e) {
         }
 
         // Store session
-        localStorage.setItem("session", JSON.stringify(data.session));
+        localStorage.setItem("sb-session", JSON.stringify(data.session));
 
         // Redirect to dashboard
         window.location.href = "dashboard.html";
@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Check if user is already logged in
 async function checkExistingSession() {
-    const sessionStr = localStorage.getItem("session");
+    const sessionStr = localStorage.getItem("sb-session");
 
     if (sessionStr) {
         try {
@@ -168,10 +168,10 @@ async function checkExistingSession() {
                 window.location.href = "dashboard.html";
             } else {
                 // Clear invalid session
-                localStorage.removeItem("session");
+                localStorage.removeItem("sb-session");
             }
         } catch {
-            localStorage.removeItem("session");
+            localStorage.removeItem("sb-session");
         }
     }
 }
