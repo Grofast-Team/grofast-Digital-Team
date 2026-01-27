@@ -4,91 +4,504 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Dashboard</title>
+    <title>Team Dashboard - Grofast</title>
+    <meta name="description"
+        content="Grofast team management dashboard for productivity tracking and team coordination.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const session = localStorage.getItem("session");
-
-        if (!session) {
-            window.location.href = "index.html";
-        }
-    </script>
+    <link rel="stylesheet" href="dashboard.css">
 </head>
 
 <body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="logo.jpg" alt="Grofast" class="sidebar-logo">
+            <span class="brand-name">Grofast</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="overview">
+                <span class="nav-icon">📊</span>
+                <span>Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-section="team">
+                <span class="nav-icon">👥</span>
+                <span>Team</span>
+            </a>
+            <a href="#" class="nav-item admin-only" data-section="admin">
+                <span class="nav-icon">⚙️</span>
+                <span>Admin Panel</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar" id="userAvatar">G</div>
+                <div class="user-details">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <span class="user-role" id="userRole">Team Member</span>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <span>🚪</span>
+                Logout
+            </button>
+        </div>
+    </aside>
 
-    <h2>Welcome to Team Dashboard</h2>
-    <button id="logoutBtn">Logout</button>
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h1 class="page-title" id="pageTitle">Overview</h1>
+            <div class="header-actions">
+                <span class="current-time" id="currentTime"></span>
+            </div>
+        </header>
 
-    <div id="adminPanel">
-        <h2>Create Team Member</h2>
-        <input id="newEmail" placeholder="Email">
-        <input id="newPassword" placeholder="Temp Password">
-        <input id="newDept" placeholder="Department">
-        <button onclick="createUser()">Create User</button>
-    </div>
+        <!-- Overview Section -->
+        <section class="content-section active" id="overviewSection">
+            <div class="welcome-banner">
+                <h2>Welcome back, <span id="welcomeName">Team Member</span>! 👋</h2>
+                <p>Here's what's happening with your team today.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">👥</div>
+                    <div class="stat-info">
+                        <h3 id="teamCount">—</h3>
+                        <p>Team Members</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-info">
+                        <h3 id="tasksCompleted">—</h3>
+                        <p>Tasks Completed</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">📋</div>
+                    <div class="stat-info">
+                        <h3 id="pendingTasks">—</h3>
+                        <p>Pending Tasks</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">📈</div>
+                    <div class="stat-info">
+                        <h3 id="productivity">—</h3>
+                        <p>Productivity</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div class="activity-list" id="activityList">
+                    <p class="empty-state">No recent activity to show.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team Section -->
+        <section class="content-section" id="teamSection">
+            <div class="section-header">
+                <h2>Team Directory</h2>
+            </div>
+            <div class="team-grid" id="teamGrid">
+                <p class="empty-state">Loading team members...</p>
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section class="content-section admin-only" id="adminSection">
+            <div class="section-header">
+                <h2>Admin Panel</h2>
+                <p class="section-subtitle">Manage team members and system settings</p>
+            </div>
+
+            <!-- Create User Form -->
+            <div class="admin-card">
+                <h3>➕ Create New Team Member</h3>
+                <form id="createUserForm" class="admin-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newEmail">Email Address</label>
+                            <input type="email" id="newEmail" placeholder="user@company.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">Temporary Password</label>
+                            <input type="text" id="newPassword" placeholder="Min 8 characters" required minlength="8">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newName">Full Name</label>
+                            <input type="text" id="newName" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newDept">Department</label>
+                            <select id="newDept" required>
+                                <option value="">Select Department</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                                <option value="HR">HR</option>
+                                <option value="Operations">Operations</option>
+                                <option value="Finance">Finance</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newRole">Role</label>
+                            <select id="newRole" required>
+                                <option value="team">Team Member</option>
+                                <option value="manager">Manager</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Create Team Member</button>
+                </form>
+            </div>
+
+            <!-- Team Members List -->
+            <div class="admin-card">
+                <h3>👥 Manage Team Members</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table" id="adminTeamTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTeamBody">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading team members...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <script>
+        // ========================================
+        // SUPABASE CONFIGURATION
+        // ========================================
         const SUPABASE_URL = "https://juinlrgyqbpssyjcuola.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1aW5scmd5cWJwc3N5amN1b2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTYxNDcsImV4cCI6MjA4NDYzMjE0N30.6Q28mR-MAsD0mJIEXT2uFVGzBX6hECJZDN3Nq_70i2I";
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function loadProfile() {
-            const sessionData = JSON.parse(localStorage.getItem("session"));
+        // ========================================
+        // STATE
+        // ========================================
+        let currentUser = null;
+        let currentProfile = null;
+        let isAdmin = false;
 
-            const { data, error } = await supabase
-                .from("user_profiles")
-                .select("*")
-                .eq("id", sessionData.user.id)
-                .single();
+        // ========================================
+        // AUTHENTICATION CHECK
+        // ========================================
+        async function checkAuth() {
+            const sessionStr = localStorage.getItem("session");
 
-            if (error) {
-                console.error("Error loading profile:", error);
-                return;
+            if (!sessionStr) {
+                window.location.href = "index.html";
+                return false;
             }
 
-            if (data.role !== "admin") {
-                document.getElementById("adminPanel").style.display = "none";
-            }
-        }
+            try {
+                const session = JSON.parse(sessionStr);
+                const { data, error } = await client.auth.getUser(session.access_token);
 
-        async function createUser() {
-            const email = document.getElementById("newEmail").value;
-            const password = document.getElementById("newPassword").value;
-            const department = document.getElementById("newDept").value;
-
-            const res = await fetch(
-                "https://juinlrgyqbpssyjcuola.functions.supabase.co/admin-create-user",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "authorization": "Bearer grofast_super_admin_key"
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password,
-                        role: "team",
-                        department
-                    })
+                if (error || !data?.user) {
+                    localStorage.removeItem("session");
+                    window.location.href = "index.html";
+                    return false;
                 }
-            );
 
-            const data = await res.json();
-            alert("User Created!");
+                currentUser = data.user;
+                return true;
+            } catch {
+                localStorage.removeItem("session");
+                window.location.href = "index.html";
+                return false;
+            }
         }
 
+        // ========================================
+        // LOAD USER PROFILE
+        // ========================================
+        async function loadProfile() {
+            if (!currentUser) return;
+
+            try {
+                const { data, error } = await client
+                    .from("user_profiles")
+                    .select("*")
+                    .eq("id", currentUser.id)
+                    .single();
+
+                if (error) {
+                    console.error("Error loading profile:", error);
+                    // Set default profile
+                    currentProfile = {
+                        full_name: currentUser.email.split("@")[0],
+                        role: "team",
+                        department: "General"
+                    };
+                } else {
+                    currentProfile = data;
+                }
+
+                isAdmin = currentProfile.role === "admin";
+                updateUI();
+
+            } catch (err) {
+                console.error("Profile load error:", err);
+            }
+        }
+
+        // ========================================
+        // UPDATE UI BASED ON PROFILE
+        // ========================================
+        function updateUI() {
+            // Update user info
+            const displayName = currentProfile?.full_name || currentUser?.email?.split("@")[0] || "User";
+            document.getElementById("userName").textContent = displayName;
+            document.getElementById("welcomeName").textContent = displayName.split(" ")[0];
+            document.getElementById("userRole").textContent = capitalizeFirst(currentProfile?.role || "team");
+            document.getElementById("userAvatar").textContent = displayName.charAt(0).toUpperCase();
+
+            // Show/hide admin elements
+            const adminElements = document.querySelectorAll(".admin-only");
+            adminElements.forEach(el => {
+                el.style.display = isAdmin ? "" : "none";
+            });
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // ========================================
+        // NAVIGATION
+        // ========================================
+        function setupNavigation() {
+            const navItems = document.querySelectorAll(".nav-item");
+            const sections = document.querySelectorAll(".content-section");
+
+            navItems.forEach(item => {
+                item.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const sectionId = item.dataset.section;
+
+                    // Update active nav
+                    navItems.forEach(nav => nav.classList.remove("active"));
+                    item.classList.add("active");
+
+                    // Show corresponding section
+                    sections.forEach(section => {
+                        section.classList.remove("active");
+                        if (section.id === `${sectionId}Section`) {
+                            section.classList.add("active");
+                        }
+                    });
+
+                    // Update page title
+                    document.getElementById("pageTitle").textContent = item.querySelector("span:last-child").textContent;
+
+                    // Close mobile menu
+                    document.getElementById("sidebar").classList.remove("open");
+                });
+            });
+
+            // Mobile menu toggle
+            document.getElementById("menuToggle").addEventListener("click", () => {
+                document.getElementById("sidebar").classList.toggle("open");
+            });
+        }
+
+        // ========================================
+        // LOAD TEAM DATA
+        // ========================================
+        async function loadTeamData() {
+            try {
+                const { data, error } = await client
+                    .from("user_profiles")
+                    .select("*")
+                    .order("created_at", { ascending: false });
+
+                if (error) throw error;
+
+                // Update stats
+                document.getElementById("teamCount").textContent = data?.length || 0;
+
+                // Populate team grid
+                const teamGrid = document.getElementById("teamGrid");
+                if (data && data.length > 0) {
+                    teamGrid.innerHTML = data.map(member => `
+                        <div class="team-card">
+                            <div class="team-avatar">${(member.full_name || "U").charAt(0).toUpperCase()}</div>
+                            <div class="team-info">
+                                <h4>${member.full_name || "Unknown"}</h4>
+                                <p class="team-dept">${member.department || "General"}</p>
+                                <span class="team-role ${member.role}">${capitalizeFirst(member.role || "team")}</span>
+                            </div>
+                        </div>
+                    `).join("");
+                } else {
+                    teamGrid.innerHTML = '<p class="empty-state">No team members found.</p>';
+                }
+
+                // Populate admin table
+                if (isAdmin) {
+                    const adminBody = document.getElementById("adminTeamBody");
+                    if (data && data.length > 0) {
+                        adminBody.innerHTML = data.map(member => `
+                            <tr>
+                                <td>${member.full_name || "Unknown"}</td>
+                                <td>${member.email || "—"}</td>
+                                <td>${member.department || "—"}</td>
+                                <td><span class="role-badge ${member.role}">${capitalizeFirst(member.role || "team")}</span></td>
+                                <td>
+                                    <button class="btn-icon" onclick="editMember('${member.id}')" title="Edit">✏️</button>
+                                </td>
+                            </tr>
+                        `).join("");
+                    }
+                }
+
+            } catch (err) {
+                console.error("Error loading team:", err);
+            }
+        }
+
+        // ========================================
+        // CREATE USER (ADMIN)
+        // ========================================
+        async function createUser(e) {
+            e.preventDefault();
+
+            const email = document.getElementById("newEmail").value.trim();
+            const password = document.getElementById("newPassword").value;
+            const name = document.getElementById("newName").value.trim();
+            const department = document.getElementById("newDept").value;
+            const role = document.getElementById("newRole").value;
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Creating...";
+
+            try {
+                const res = await fetch(
+                    `${SUPABASE_URL}/functions/v1/admin-create-user`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer grofast_super_admin_key"
+                        },
+                        body: JSON.stringify({
+                            email,
+                            password,
+                            full_name: name,
+                            role,
+                            department
+                        })
+                    }
+                );
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || "Failed to create user");
+                }
+
+                showToast("✅ User created successfully!", "success");
+                e.target.reset();
+                loadTeamData();
+
+            } catch (err) {
+                showToast("❌ " + err.message, "error");
+                console.error("Create user error:", err);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Create Team Member";
+            }
+        }
+
+        // ========================================
+        // TOAST NOTIFICATIONS
+        // ========================================
+        function showToast(message, type = "info") {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add("fade-out");
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ========================================
         // LOGOUT
-        document.getElementById("logoutBtn").addEventListener("click", async () => {
-            await supabase.auth.signOut();
+        // ========================================
+        async function logout() {
+            try {
+                await client.auth.signOut();
+            } catch { }
             localStorage.removeItem("session");
             window.location.href = "index.html";
-        });
+        }
 
-        loadProfile();
+        // ========================================
+        // TIME DISPLAY
+        // ========================================
+        function updateTime() {
+            const now = new Date();
+            const options = { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById("currentTime").textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // ========================================
+        // INITIALIZE
+        // ========================================
+        async function init() {
+            const isAuthed = await checkAuth();
+            if (!isAuthed) return;
+
+            await loadProfile();
+            setupNavigation();
+            loadTeamData();
+
+            document.getElementById("logoutBtn").addEventListener("click", logout);
+            document.getElementById("createUserForm").addEventListener("submit", createUser);
+
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+
+        init();
     </script>
-
 </body>
 
 </html>
