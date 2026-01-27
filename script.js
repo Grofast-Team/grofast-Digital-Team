@@ -91,6 +91,25 @@ async function handleLogin(e) {
         // Store session
         localStorage.setItem("sb-session", JSON.stringify(data.session));
 
+        // Enterprise Status Check
+        const { data: profile, error: profileError } = await client
+            .from("user_profiles")
+            .select("status")
+            .eq("id", data.user.id)
+            .single();
+
+        if (profileError && profileError.code !== "PGRST116") {
+            console.error("Profile check error:", profileError);
+        }
+
+        if (profile && profile.status && profile.status !== "active") {
+            hideLoading(submitBtn);
+            showError(`Account Status: ${profile.status}. Access is restricted. Contact your admin.`);
+            await client.auth.signOut();
+            localStorage.removeItem("sb-session");
+            return;
+        }
+
         // Redirect to dashboard
         window.location.href = "dashboard.html";
 

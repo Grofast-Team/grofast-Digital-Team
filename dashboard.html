@@ -124,18 +124,14 @@
                 <p class="section-subtitle">Manage team members and system settings</p>
             </div>
 
-            <!-- Create User Form -->
+            <!-- Invite User Form -->
             <div class="admin-card">
-                <h3>➕ Create New Team Member</h3>
+                <h3>📧 Invite New Team Member</h3>
                 <form id="createUserForm" class="admin-form">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="newEmail">Email Address</label>
                             <input type="email" id="newEmail" placeholder="user@company.com" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="newPassword">Temporary Password</label>
-                            <input type="text" id="newPassword" placeholder="Min 8 characters" required minlength="8">
                         </div>
                     </div>
                     <div class="form-row">
@@ -166,7 +162,7 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary">Create Team Member</button>
+                    <button type="submit" class="btn-primary">Send Team Invitation</button>
                 </form>
             </div>
 
@@ -181,6 +177,7 @@
                                 <th>Email</th>
                                 <th>Department</th>
                                 <th>Role</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -395,6 +392,7 @@
                                 <td>${member.email || "—"}</td>
                                 <td>${member.department || "—"}</td>
                                 <td><span class="role-badge ${member.role}">${capitalizeFirst(member.role || "team")}</span></td>
+                                <td><span class="status-badge ${member.status || "active"}">${capitalizeFirst(member.status || "active")}</span></td>
                                 <td>
                                     <button class="btn-icon" onclick="editMember('${member.id}')" title="Edit">✏️</button>
                                 </td>
@@ -409,20 +407,19 @@
         }
 
         // ========================================
-        // CREATE USER (ADMIN)
+        // INVITE USER (ADMIN)
         // ========================================
         async function createUser(e) {
             e.preventDefault();
 
             const email = document.getElementById("newEmail").value.trim();
-            const password = document.getElementById("newPassword").value;
             const name = document.getElementById("newName").value.trim();
             const department = document.getElementById("newDept").value;
             const role = document.getElementById("newRole").value;
 
             const submitBtn = e.target.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
-            submitBtn.textContent = "Creating...";
+            submitBtn.textContent = "Sending Invite...";
 
             try {
                 const res = await fetch(
@@ -431,11 +428,11 @@
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": "Bearer grofast_super_admin_key"
+                            "Authorization": "Bearer grofast_super_admin_key",
+                            "x-admin-id": currentUser.id
                         },
                         body: JSON.stringify({
                             email,
-                            password,
                             full_name: name,
                             role,
                             department
@@ -446,10 +443,10 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(data.error || "Failed to create user");
+                    throw new Error(data.error || "Failed to send invite");
                 }
 
-                showToast("✅ User created successfully!", "success");
+                showToast("✅ Invitation sent correctly!", "success");
                 e.target.reset();
                 loadTeamData();
 
