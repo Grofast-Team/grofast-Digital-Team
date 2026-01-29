@@ -428,8 +428,7 @@
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": "Bearer grofast_super_admin_key",
-                            "x-admin-id": currentUser.id
+                            "Authorization": `Bearer ${(await client.auth.getSession()).data.session.access_token}`,
                         },
                         body: JSON.stringify({
                             email,
