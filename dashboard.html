@@ -422,13 +422,20 @@
             submitBtn.textContent = "Sending Invite...";
 
             try {
+                // Get logged-in session
+                const { data: { session } } = await client.auth.getSession();
+
+                if (!session) {
+                    throw new Error("Not logged in");
+                }
+
                 const res = await fetch(
                     `${SUPABASE_URL}/functions/v1/admin-create-user`,
                     {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": `Bearer ${(await client.auth.getSession()).data.session.access_token}`,
+                            "Authorization": `Bearer ${session.access_token}`
                         },
                         body: JSON.stringify({
                             email,
@@ -445,7 +452,7 @@
                     throw new Error(data.error || "Failed to send invite");
                 }
 
-                showToast("✅ Invitation sent correctly!", "success");
+                showToast(`✅ Invite sent to ${email}`, "success");
                 e.target.reset();
                 loadTeamData();
 
