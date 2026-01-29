@@ -3,98 +3,100 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ADMIN_SECRET = Deno.env.get("ADMIN_SECRET")!;
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 Deno.serve(async (req) => {
-    // Handle CORS preflight
+    // Handle CORS
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders });
+        return new Response('ok', {
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST',
+                'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-id, x-admin-secret',
+            }
+        })
     }
 
     try {
-        // 1. Get the User's JWT from the request
-        const authHeader = req.headers.get("authorization");
-        if (!authHeader) {
-            throw new Error("Missing auth token");
-        }
+        const adminSecretHeader = req.headers.get("x-admin-secret");
 
-        // 2. Create a client with the USER'S token to check their identity
-        const userClient = createClient(
-            SUPABASE_URL,
-            Deno.env.get("SUPABASE_ANON_KEY")!,
-            { global: { headers: { Authorization: authHeader } } }
-        );
-
-        // 3. Verify the user is real
-        const { data: { user }, error: userError } = await userClient.auth.getUser();
-        if (userError || !user) {
-            throw new Error("Invalid user token");
-        }
-
-        // 4. Create an Admin Client (Service Role) for database lookup & invite
-        // We use this to look up the role because standard users might not have read access to everyone's role depending on strict RLS.
-        const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-
-        // 5. SECURITY CHECK: Is this user an Admin?
-        const { data: profile } = await supabaseAdmin
-            .from("user_profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-
-        if (!profile || profile.role !== "admin") {
-            return new Response(JSON.stringify({ error: "Unauthorized: Admins only" }), {
-                status: 403,
-                headers: { ...corsHeaders, "Content-Type": "application/json" }
+        // Check if the request is from our authorized admin frontend
+        if (!adminSecretHeader || adminSecretHeader !== ADMIN_SECRET) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
             });
         }
 
-        // 6. Perform the Invite
-        const { email, role = "team", department = "General", full_name } = await req.json();
+        const { email, role, department, full_name } = await req.json();
 
-        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-            data: { full_name: full_name || email.split('@')[0] }
-        });
-
-        if (inviteError) {
-            throw inviteError;
+        if (!email || !role) {
+            return new Response(JSON.stringify({ error: "Missing required fields (email/role)" }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
         }
 
-        // 7. Create Profile for the new user
-        const newUser = inviteData.user;
-        await supabaseAdmin.from("user_profiles").insert({
-            id: newUser.id,
-            email: newUser.email,
-            full_name: full_name || newUser.email?.split('@')[0],
+        // ==========================
+        // CREATE USER INVITE (AUTH)
+        // ==========================
+        const { data: inviteData, error: inviteError } =
+            await supabase.auth.admin.inviteUserByEmail(email, {
+                data: { full_name: full_name || email.split('@')[0] }
+            });
+
+        if (inviteError) {
+            return new Response(JSON.stringify(inviteError), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+        }
+
+        const user = inviteData.user;
+
+        // ==========================
+        // CREATE PROFILE (PUBLIC)
+        // ==========================
+        const { error: profileError } = await supabase.from("user_profiles").insert({
+            id: user.id,
+            email: user.email,
+            full_name: full_name || user.email.split('@')[0],
             role,
             department,
             status: "invited"
         });
 
-        // 8. Log it (Audit Trail)
-        await supabaseAdmin.from("audit_logs").insert({
-            admin_id: user.id,
+        if (profileError) {
+            console.error("Profile creation error:", profileError);
+        }
+
+        // ==========================
+        // AUDIT LOG
+        // ==========================
+        const adminId = req.headers.get("x-admin-id");
+
+        await supabase.from("audit_logs").insert({
+            admin_id: adminId,
             action: "INVITE_USER",
-            target_user: newUser.id,
-            metadata: { email, role, department }
+            target_user: user.id,
+            metadata: { email, role, department, full_name }
         });
 
         return new Response(JSON.stringify({
             success: true,
-            message: "User invited successfully",
-            user: newUser
+            message: "Enterprise invite sent successfully",
+            user_id: user.id
         }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
 
     } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            status: 500,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
     }
 });

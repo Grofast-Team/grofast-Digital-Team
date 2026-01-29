@@ -430,12 +430,12 @@
                 }
 
                 const res = await fetch(
-                    `${SUPABASE_URL}/functions/v1/admin-create-user`,
+                    "https://juinlrgyqbpssyjcuola.functions.supabase.co/admin-create-user",
                     {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": `Bearer ${session.access_token}`
+                            "x-admin-secret": "grofast_super_admin_key"
                         },
                         body: JSON.stringify({
                             email,
